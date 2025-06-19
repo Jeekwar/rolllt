@@ -1,13 +1,10 @@
 "use client";
 import {
     Box,
-    Card,
     Flex,
-    Grid,
     GridItem,
     Image,
     SimpleGrid,
-    Text,
 } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { useState } from "react";

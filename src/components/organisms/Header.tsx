@@ -1,7 +1,5 @@
 "use client";
-import Image from "next/image";
 import {
-    Text,
     Flex,
     Box,
 } from "@chakra-ui/react";
@@ -25,6 +23,11 @@ const Header = () => {
         },
     ];
 
+    const token = process.env.NEXT_PUBLIC_API_TOKEN
+
+    console.log({token});
+    
+
     const color = "white";
     return (
         <Box position={"sticky"} top={0} zIndex={3}>
@@ -38,7 +41,6 @@ const Header = () => {
                 <div>
                     <h1 className="font-extrabold">Rolllt</h1>
                 </div>
-                
                 <div>
                     <InputGroup startElement={<BiSearch fontSize={24} color="crimson" />}>
                         <Input type="tel" placeholder="search" paddingLeft={24} />
