@@ -1,8 +1,14 @@
+"use client";
+import React from "react";
+import Header from "@/components/organisms/Header";
+import ListMovie from "@/components/templates/List";
+
 export default function Home() {
+
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Welcome to App Router!</h1>
-      <p>This uses React Server Components by default.</p>
-    </div>
-  )
+    <>
+      <Header />
+      <ListMovie/>
+    </>
+  );
 }
