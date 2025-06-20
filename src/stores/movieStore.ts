@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getListMovie, getMoviesBySearch } from "@/services/movies.service"; 
+import { getListMovie, getMoviesBySearch } from "@/services/movies.service";
 
 type MovieItem = {
   adult: boolean;
@@ -56,9 +56,24 @@ export const useMoviesStore = create<MovieState>((set, get) => ({
         responseData = defaultResponse.results || [];
       }
       set({ movies: responseData, isLoading: false });
-    } catch (err: any) {
-      console.error("Failed to fetch movies in store:", err);
-      set({ error: err.message || "Failed to load movies", isLoading: false });
+    } catch (err: unknown) {
+
+
+      let errorMessage = "An unknown error occurred.";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "message" in err &&
+        typeof (err as any).message === "string"
+      ) {
+        errorMessage = (err as any).message;
+      }
+
+      set({ error: errorMessage || "Failed to load movies", isLoading: false });
     }
   },
   fetchSuggestions: async (query: string) => {
