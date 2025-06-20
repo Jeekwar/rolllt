@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { BiSearch } from 'react-icons/bi';
 import { Input } from '@/components/ui/input';
 
@@ -8,7 +8,6 @@ import { useMoviesStore } from "@/stores/movieStore";
 import { useRouter } from 'next/navigation';
 
 const Header: React.FC = () => {
-    const router = useRouter();
     const { searchQuery, setSearchQuery, fetchMovies, suggestions, fetchSuggestions, clearSuggestions, isFetchingSuggestions } = useMoviesStore();
     const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const suggestionDebounceRef = useRef<NodeJS.Timeout | null>(null);

@@ -1,18 +1,9 @@
 "use client"
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
-import { getImagesMovie, getListMovie } from "@/services/movies.service"
+import { useEffect} from "react"
+import { getImagesMovie} from "@/services/movies.service"
 import apiUrls from "@/services/apiConfig"
 import { useMoviesStore } from "@/stores/movieStore"
-
-type MovieItem = {
-    id: string
-    original_title: string
-    poster_path: string
-}
-
-
-const MotionBox = motion.div
 
 const ListMovie: React.FC = (props) => {
     const movies = useMoviesStore((state) => state.movies);
