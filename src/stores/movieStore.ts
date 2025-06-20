@@ -56,9 +56,9 @@ export const useMoviesStore = create<MovieState>((set, get) => ({
         responseData = defaultResponse.results || [];
       }
       set({ movies: responseData, isLoading: false });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch movies in store:", err);
-      set({ error: err.message || "Failed to load movies", isLoading: false });
+      set({ error: err?.message || "Failed to load movies", isLoading: false });
     }
   },
   fetchSuggestions: async (query: string) => {
