@@ -3,32 +3,35 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { BiSearch } from 'react-icons/bi';
 import { Input } from '@/components/ui/input';
-
-import { useMoviesStore } from "@/stores/movieStore";
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useMoviesStore, MovieCategory } from "@/stores/movieStore"; // Asumsi MovieCategory ada di sini
+import { usePathname, useRouter } from 'next/navigation';
 
 const Header: React.FC = () => {
-    const { searchQuery, setSearchQuery, fetchMovies, suggestions, fetchSuggestions, clearSuggestions, isFetchingSuggestions } = useMoviesStore();
+    const router = useRouter();
+    const pathname = usePathname();
+    const { searchQuery, setSearchQuery, fetchMovies, suggestions, fetchSuggestions, clearSuggestions, isFetchingSuggestions, setCategory, currentCategory } = useMoviesStore();
+
     const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const suggestionDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [showCategorySubmenu, setShowCategorySubmenu] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
         setSearchQuery(query);
 
-        // Clear debounce untuk pencarian utama
         if (searchDebounceRef.current) {
             clearTimeout(searchDebounceRef.current);
         }
-        // Set debounce untuk pencarian utama (misal, setelah 500ms tidak mengetik)
-        searchDebounceRef.current = setTimeout(() => {
-            if (query === "") {
-                fetchMovies();
-            }
 
+        const newCategory = query.length > 0 ? 'search' : currentCategory;
+        setCategory(newCategory);
+
+        searchDebounceRef.current = setTimeout(() => {
+            fetchMovies(newCategory);
         }, 500);
 
         if (suggestionDebounceRef.current) {
@@ -38,83 +41,142 @@ const Header: React.FC = () => {
         if (query.length > 2) {
             suggestionDebounceRef.current = setTimeout(() => {
                 fetchSuggestions(query);
-                setShowSuggestions(true); // Tampilkan saran setelah fetch
+                setShowSuggestions(true);
             }, 200);
         } else {
-            clearSuggestions(); // Hapus saran jika query terlalu pendek atau kosong
+            clearSuggestions();
             setShowSuggestions(false);
         }
-    }, [setSearchQuery, fetchMovies, fetchSuggestions, clearSuggestions]);
+    }, [setSearchQuery, fetchMovies, fetchSuggestions, clearSuggestions, setCategory, currentCategory]);
 
     const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Clear semua debounce saat submit
+
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         if (suggestionDebounceRef.current) clearTimeout(suggestionDebounceRef.current);
 
-        fetchMovies(); // Panggil fetchMovies segera
-        clearSuggestions(); // Hapus saran setelah submit
-        setShowSuggestions(false); // Sembunyikan saran
-        inputRef.current?.blur(); // Sembunyikan keyboard di mobile
-       
-    }, [searchQuery, fetchMovies, clearSuggestions]);
+        setCategory('search');
+        fetchMovies('search');
+        clearSuggestions();
+        setShowSuggestions(false);
+        inputRef.current?.blur();
 
-    // Menangani klik pada saran
+        if (pathname !== '/') {
+            router.push('/');
+        }
+    }, [searchQuery, fetchMovies, clearSuggestions, pathname, router, setCategory]);
+
     const handleSuggestionClick = useCallback((title: string) => {
-        setSearchQuery(title); // Isi input dengan saran yang diklik
-        // Clear semua debounce saat memilih saran
+        setSearchQuery(title);
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         if (suggestionDebounceRef.current) clearTimeout(suggestionDebounceRef.current);
 
-        fetchMovies(); // Langsung lakukan pencarian dengan saran tersebut
-        clearSuggestions(); // Hapus saran
-        setShowSuggestions(false); // Sembunyikan saran
-        inputRef.current?.blur(); // Sembunyikan keyboard di mobile
-       ;
-    }, [setSearchQuery, fetchMovies, clearSuggestions]);
+        setCategory('search');
+        fetchMovies('search');
+        clearSuggestions();
+        setShowSuggestions(false);
+        inputRef.current?.blur();
 
-    // Menangani ketika input kehilangan fokus (blur)
+        if (pathname !== '/') {
+            router.push('/');
+        }
+    }, [setSearchQuery, fetchMovies, clearSuggestions, pathname, router, setCategory]);
+
     const handleInputBlur = useCallback(() => {
         setTimeout(() => {
             setShowSuggestions(false);
-        }, 150); // Delay sedikit untuk memungkinkan klik pada saran
+        }, 150);
     }, []);
 
-    // Menangani ketika input mendapatkan fokus (focus)
     const handleInputFocus = useCallback(() => {
         if (suggestions.length > 0) {
-            setShowSuggestions(true); // Tampilkan saran lagi jika ada
+            setShowSuggestions(true);
+        } else if (searchQuery.length > 2) {
+             fetchSuggestions(searchQuery);
+             setShowSuggestions(true);
         }
-    }, [suggestions.length]);
-
+    }, [suggestions.length, searchQuery, fetchSuggestions]);
 
     const menu = [
-        { label: "Home", href: "" },
-        { label: "Category", href: "/category" },
+        { label: "Home", href: "/" },
+        {
+            label: "Category",
+            href: "#",
+            sub_menu: [
+                { label: "Now Playing", category: "now_playing" as MovieCategory, href: "/" },
+                { label: "Popular", category: "popular" as MovieCategory, href: "/" },
+                { label: "Top Rated", category: "top_rated" as MovieCategory, href: "/" },
+                { label: "Upcoming", category: "upcoming" as MovieCategory, href: "/" },
+            ],
+        },
         { label: "Collection", href: "/collection" },
     ];
+
+    const handleCategorySubmenuClick = useCallback((category: Exclude<MovieCategory, 'search'>) => {
+        setCategory(category);
+        setSearchQuery('');
+        fetchMovies(category);
+        router.push('/');
+        setShowCategorySubmenu(false);
+    }, [setCategory, fetchMovies, router, setSearchQuery]);
+
+    const handlerMenu = useCallback((item: {label: string, href: string, sub_menu?: any[]}) => {
+        if(item.label === "Home"){
+            router.push(item.href);
+            setSearchQuery('');
+            setCategory('popular');
+        } else if (item.label === "Collection") {
+            router.push(item.href);
+            setSearchQuery('');
+            setCategory('popular');
+        }
+    }, [router, setSearchQuery, setCategory]);
 
     return (
         <header className="bg-white p-4 shadow-md fixed top-0 w-full z-10">
             <nav className="container mx-auto flex justify-between items-center">
-                <div className="text-3xl font-bold text-[#1E2F50]">Rolllt</div>
+                <div className="text-3xl font-bold text-[#1E2F50] cursor-pointer" onClick={() => {router.push('/'); setSearchQuery(''); setCategory('popular');}}>Rolllt</div>
                 <div>
                     <ul className="flex gap-3">
-                        {menu.map((item, index) =>
-                            (<li key={index} className="cursor-pointer text-[#1E2F50] hover:text-blue-600">{item.label}</li>)
-                        )}
+                        {menu.map((item, index) => (
+                            <li
+                                key={index}
+                                className="relative cursor-pointer text-[#1E2F50] hover:text-blue-600"
+                                onMouseEnter={() => item.label === "Category" && setShowCategorySubmenu(true)}
+                                onMouseLeave={() => item.label === "Category" && setShowCategorySubmenu(false)}
+                                onClick={() => handlerMenu(item)}
+                            >
+                                {item.label}
+                                {item.sub_menu && showCategorySubmenu && (
+                                    <ul className="absolute left-0 top-full w-40 bg-white border border-gray-200 rounded-md shadow-lg z-40">
+                                        {item.sub_menu.map((subItem, subIndex) => (
+                                            <li
+                                                key={subIndex}
+                                                className="px-4 py-2 hover:bg-gray-100 text-sm text-[#1E2F50] cursor-pointer"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCategorySubmenuClick(subItem.category);
+                                                }}
+                                            >
+                                                {subItem.label}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </li>
+                        ))}
                     </ul>
                 </div>
                 <form onSubmit={handleSearchSubmit} className="relative w-1/4 max-w-md">
-                    <div className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-20"> 
+                    <div className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-20">
                         <BiSearch className="h-4 w-4 text-[#1E2F50]" />
                     </div>
                     <Input
-                        ref={inputRef} 
+                        ref={inputRef}
                         id="search"
                         type="search"
                         placeholder="Search for movies..."
-                        className="w-full rounded-lg bg-gray-100 pl-8 pr-4 py-2 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[#1E2F50] relative z-10" // z-index untuk memastikan input di atas saran
+                        className="w-full rounded-lg bg-gray-100 pl-8 pr-4 py-2 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[#1E2F50] relative z-10"
                         value={searchQuery}
                         onChange={handleSearchInputChange}
                         onFocus={handleInputFocus}
@@ -127,7 +189,10 @@ const Header: React.FC = () => {
                                 <div
                                     key={suggestion.id}
                                     className="p-3 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
-                                    onClick={() => handleSuggestionClick(suggestion.title)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSuggestionClick(suggestion.title);
+                                    }}
                                 >
                                     {suggestion.poster_path ? (
                                         <img
@@ -141,7 +206,7 @@ const Header: React.FC = () => {
                                     <span className="text-[#1E2F50] text-sm">{suggestion.title}</span>
                                     {suggestion.release_date && (
                                         <span className="text-gray-500 text-xs ml-auto">
-                                            ({new Date(suggestion.release_date).getFullYear()}) 
+                                            ({new Date(suggestion.release_date).getFullYear()})
                                         </span>
                                     )}
                                 </div>

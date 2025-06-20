@@ -1,96 +1,134 @@
-import { create } from "zustand";
-import { getListMovie, getMoviesBySearch } from "@/services/movies.service";
+import { create } from 'zustand';
+import { getPopularMovies, getNowPlayingMovies, getTopRatedMovies, getUpcomingMovies, getMoviesBySearch } from '@/services/movies.service';
+import { MovieItem, MovieListApiResponse, MovieCategory } from '@/lib/types'; // Asumsi MovieCategory ada di sini
 
-type MovieItem = {
-  adult: boolean;
-  backdrop_path: string | null;
-  genre_ids: number[];
-  id: number;
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  poster_path: string | null;
-  release_date: string;
-  title: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
-};
+interface AppMovieState {
+    movies: MovieItem[];
+    isLoading: boolean;
+    isFetchingMore: boolean;
+    error: string | null;
+    searchQuery: string;
+    suggestions: MovieItem[];
+    isFetchingSuggestions: boolean;
+    currentPage: number;
+    totalPages: number;
+    currentCategory: MovieCategory;
 
-interface MovieState {
-  movies: MovieItem[];
-  isLoading: boolean;
-  error: string | null;
-  searchQuery: string;
-  suggestions: MovieItem[];
-  isFetchingSuggestions: boolean;
-  fetchMovies: () => Promise<void>;
-  setSearchQuery: (query: string) => void;
-  fetchSuggestions: (query: string) => Promise<void>;
-  clearSuggestions: () => void;
+    setSearchQuery: (query: string) => void;
+    clearSuggestions: () => void;
+    clearSearchResults: () => void;
+    fetchMovies: (category?: MovieCategory, page?: number, append?: boolean) => Promise<void>;
+    fetchSuggestions: (query: string) => Promise<void>;
+    setCategory: (category: MovieCategory) => void;
+    loadMoreMovies: () => Promise<void>;
 }
 
-export const useMoviesStore = create<MovieState>((set, get) => ({
-  movies: [],
-  isLoading: false,
-  error: null,
-  searchQuery: "",
-  suggestions: [],
-  isFetchingSuggestions: false,
+export const useMoviesStore = create<AppMovieState>((set, get) => ({
+    movies: [],
+    isLoading: false,
+    isFetchingMore: false,
+    error: null,
+    searchQuery: '',
+    suggestions: [],
+    isFetchingSuggestions: false,
+    currentPage: 0,
+    totalPages: 1,
+    currentCategory: 'popular',
 
-  setSearchQuery: (query: string) => set({ searchQuery: query }),
-  clearSuggestions: () => set({ suggestions: [] }),
+    setSearchQuery: (query: string) => set({ searchQuery: query }),
+    clearSuggestions: () => set({ suggestions: [] }),
 
-  fetchMovies: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const currentSearchQuery = get().searchQuery;
-      let responseData;
+    clearSearchResults: () => {
+        set({
+            searchQuery: '',
+            currentPage: 1,
+            totalPages: 1,
+            currentCategory: 'popular',
+            movies: [],
+        });
+        get().fetchMovies('popular', 1);
+    },
 
-      if (currentSearchQuery) {
-        const searchResponse = await getMoviesBySearch(currentSearchQuery);
-        responseData = searchResponse.results || [];
-      } else {
-        const defaultResponse = await getListMovie();
-        responseData = defaultResponse.results || [];
-      }
-      set({ movies: responseData, isLoading: false });
-    } catch (err: unknown) {
+    fetchMovies: async (category?: MovieCategory, page: number = 1, append: boolean = false) => {
+        const state = get();
+        if (state.isLoading && !append) return;
+        if (state.isFetchingMore && append) return;
+        if (append && state.currentPage >= state.totalPages) return;
 
+        set(append ? { isFetchingMore: true } : { isLoading: true, error: null });
 
-      let errorMessage = "An unknown error occurred.";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === "string") {
-        errorMessage = err;
-      } else if (
-        typeof err === "object" &&
-        err !== null &&
-        "message" in err &&
-        typeof (err as any).message === "string"
-      ) {
-        errorMessage = (err as any).message;
-      }
+        let activeCategory: MovieCategory = category || state.currentCategory;
+        let queryToUse = state.searchQuery;
 
-      set({ error: errorMessage || "Failed to load movies", isLoading: false });
-    }
-  },
-  fetchSuggestions: async (query: string) => {
-    if (query.length < 3) {
-      set({ suggestions: [], isFetchingSuggestions: false });
-      return;
-    }
-    set({ isFetchingSuggestions: true });
-    try {
-      const response = await getMoviesBySearch(query);
-      set({
-        suggestions: response.results?.slice(0, 7) || [],
-        isFetchingSuggestions: false,
-      });
-    } catch (err) {
-      console.error("Failed to fetch suggestions:", err);
-      set({ suggestions: [], isFetchingSuggestions: false });
-    }
-  },
+        if (queryToUse && queryToUse.length > 0) {
+            activeCategory = 'search';
+        } else if (!category) {
+             activeCategory = state.currentCategory;
+        }
+
+        try {
+            let response: MovieListApiResponse;
+            const targetPage = append ? state.currentPage + 1 : page;
+
+            switch (activeCategory) {
+                case 'search':
+                    if (!queryToUse) throw new Error("Search query is empty for 'search' category.");
+                    response = await getMoviesBySearch(queryToUse, targetPage);
+                    break;
+                case 'now_playing':
+                    response = await getNowPlayingMovies(targetPage);
+                    break;
+                case 'top_rated':
+                    response = await getTopRatedMovies(targetPage);
+                    break;
+                case 'upcoming':
+                    response = await getUpcomingMovies(targetPage);
+                    break;
+                case 'popular':
+                default:
+                    response = await getPopularMovies(targetPage);
+                    break;
+            }
+
+            set((s) => ({
+                movies: append ? [...s.movies, ...(response.results || [])] : (response.results || []),
+                currentPage: response.page,
+                totalPages: response.total_pages,
+                isLoading: false,
+                isFetchingMore: false,
+                currentCategory: activeCategory,
+                searchQuery: activeCategory === 'search' ? queryToUse : '',
+            }));
+
+        } catch (err: unknown) {
+            console.error("Failed to fetch movies:", err);
+            const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred.";
+            set({ error: errorMessage, isLoading: false, isFetchingMore: false });
+        }
+    },
+
+    loadMoreMovies: async () => {
+        const state = get();
+        if (state.currentPage < state.totalPages && !state.isLoading && !state.isFetchingMore) {
+            state.fetchMovies(state.currentCategory, state.currentPage + 1, true);
+        }
+    },
+
+    fetchSuggestions: async (query: string) => {
+        if (query.length < 3) {
+            set({ suggestions: [], isFetchingSuggestions: false });
+            return;
+        }
+        set({ isFetchingSuggestions: true });
+        try {
+            const response: MovieListApiResponse = await getMoviesBySearch(query);
+            set({ suggestions: response.results?.slice(0, 7) || [], isFetchingSuggestions: false });
+        } catch (err: unknown) {
+            console.error("Failed to fetch suggestions:", err);
+            const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred.";
+            set({ suggestions: [], isFetchingSuggestions: false });
+        }
+    },
+
+    setCategory: (category: MovieCategory) => set({ currentCategory: category, searchQuery: '', currentPage: 1, movies: [] }),
 }));

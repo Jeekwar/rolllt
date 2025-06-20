@@ -5,5 +5,7 @@ const apiUrls = {
     movie: "/movie"
 }
 
+export const authToken = process.env.NEXT_PUBLIC_API_TOKEN
+
 
 export default apiUrls
