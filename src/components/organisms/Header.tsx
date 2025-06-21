@@ -4,7 +4,9 @@ import React, { useState, useCallback, useRef } from 'react';
 import { BiSearch } from 'react-icons/bi';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { useMoviesStore, MovieCategory } from "@/stores/movieStore"; // Asumsi MovieCategory ada di sini
+import { useMoviesStore } from "@/stores/movieStore";
+import { MovieCategory } from '@/lib/types';
+
 import { usePathname, useRouter } from 'next/navigation';
 
 const Header: React.FC = () => {
@@ -92,8 +94,8 @@ const Header: React.FC = () => {
         if (suggestions.length > 0) {
             setShowSuggestions(true);
         } else if (searchQuery.length > 2) {
-             fetchSuggestions(searchQuery);
-             setShowSuggestions(true);
+            fetchSuggestions(searchQuery);
+            setShowSuggestions(true);
         }
     }, [suggestions.length, searchQuery, fetchSuggestions]);
 
@@ -120,8 +122,8 @@ const Header: React.FC = () => {
         setShowCategorySubmenu(false);
     }, [setCategory, fetchMovies, router, setSearchQuery]);
 
-    const handlerMenu = useCallback((item: {label: string, href: string, sub_menu?: any[]}) => {
-        if(item.label === "Home"){
+    const handlerMenu = useCallback((item: { label: string, href: string, sub_menu?: any[] }) => {
+        if (item.label === "Home") {
             router.push(item.href);
             setSearchQuery('');
             setCategory('popular');
@@ -135,7 +137,7 @@ const Header: React.FC = () => {
     return (
         <header className="bg-white p-4 shadow-md fixed top-0 w-full z-10">
             <nav className="container mx-auto flex justify-between items-center">
-                <div className="text-3xl font-bold text-[#1E2F50] cursor-pointer" onClick={() => {router.push('/'); setSearchQuery(''); setCategory('popular');}}>Rolllt</div>
+                <div className="text-3xl font-bold text-[#1E2F50] cursor-pointer" onClick={() => { router.push('/'); setSearchQuery(''); setCategory('popular'); }}>Rolllt</div>
                 <div>
                     <ul className="flex gap-3">
                         {menu.map((item, index) => (

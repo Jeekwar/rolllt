@@ -34,8 +34,9 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
     currentPage: 0,
     totalPages: 1,
     currentCategory: 'popular',
-
-    setSearchQuery: (query: string) => set({ searchQuery: query }),
+    setSearchQuery: (query: string) => {
+        set({ searchQuery: query })
+    },
     clearSuggestions: () => set({ suggestions: [] }),
 
     clearSearchResults: () => {
@@ -51,6 +52,7 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
 
     fetchMovies: async (category?: MovieCategory, page: number = 1, append: boolean = false) => {
         const state = get();
+        
         if (state.isLoading && !append) return;
         if (state.isFetchingMore && append) return;
         if (append && state.currentPage >= state.totalPages) return;
@@ -59,6 +61,9 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
 
         let activeCategory: MovieCategory = category || state.currentCategory;
         let queryToUse = state.searchQuery;
+
+        console.log({activeCategory});
+        
 
         if (queryToUse && queryToUse.length > 0) {
             activeCategory = 'search';
@@ -97,7 +102,7 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
                 isLoading: false,
                 isFetchingMore: false,
                 currentCategory: activeCategory,
-                searchQuery: activeCategory === 'search' ? queryToUse : '',
+                // searchQuery: activeCategory === 'search' ? queryToUse : '',
             }));
 
         } catch (err: unknown) {
@@ -130,5 +135,10 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
         }
     },
 
-    setCategory: (category: MovieCategory) => set({ currentCategory: category, searchQuery: '', currentPage: 1, movies: [] }),
+    setCategory: (category: MovieCategory) => {
+        set({ currentCategory: category, currentPage: 1, movies: [] })
+        if (category !== 'search') {
+            set({ searchQuery: '' });
+        }
+    },
 }));
