@@ -61,8 +61,6 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
 
         let activeCategory: MovieCategory = category || state.currentCategory;
         let queryToUse = state.searchQuery;
-
-        console.log({activeCategory});
         
 
         if (queryToUse && queryToUse.length > 0) {
