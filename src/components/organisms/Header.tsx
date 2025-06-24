@@ -151,7 +151,7 @@ const Header: React.FC = () => {
                                 {item.label}
                                 {item.sub_menu && showCategorySubmenu && (
                                     <ul className="absolute left-0 top-full w-40 bg-white border border-gray-200 rounded-md shadow-lg z-40">
-                                        {item.sub_menu.map((subItem, subIndex) => (
+                                        {item.sub_menu.filter(item => item.category !== 'search').map((subItem, subIndex) => (
                                             <li
                                                 key={subIndex}
                                                 className="px-4 py-2 hover:bg-gray-100 text-sm text-[#1E2F50] cursor-pointer"
