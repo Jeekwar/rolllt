@@ -114,7 +114,7 @@ const Header: React.FC = () => {
         { label: "Collection", href: "/collection" },
     ];
 
-    const handleCategorySubmenuClick = useCallback((category: Exclude<MovieCategory, 'search'>) => {
+    const handleCategorySubmenuClick = useCallback((category:MovieCategory) => {
         setCategory(category);
         setSearchQuery('');
         fetchMovies(category);
