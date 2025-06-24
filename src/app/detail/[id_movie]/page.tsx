@@ -5,6 +5,7 @@ import { getMovieDetail } from '@/services/movies.service';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeftLong } from "react-icons/fa6";
 import React, { useEffect, useState } from 'react'; 
+import Image from 'next/image';
 
 interface MovieDetailPageProps {
   params: {
@@ -77,7 +78,7 @@ export default function MovieDetailPage({ params }: MovieDetailPageProps) {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden md:flex">
         {movieDetail.poster_path && (
           <div className="md:flex-shrink-0">
-            <img
+            <Image
               src={`https://image.tmdb.org/t/p/w500/${movieDetail.poster_path}`}
               alt={movieDetail.title}
               className="w-full h-auto md:w-64 object-cover"

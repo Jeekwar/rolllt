@@ -8,6 +8,7 @@ import { useMoviesStore } from "@/stores/movieStore";
 import { MovieCategory } from '@/lib/types';
 
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const Header: React.FC = () => {
     const router = useRouter();
@@ -197,7 +198,7 @@ const Header: React.FC = () => {
                                     }}
                                 >
                                     {suggestion.poster_path ? (
-                                        <img
+                                        <Image
                                             src={`https://image.tmdb.org/t/p/w92/${suggestion.poster_path}`}
                                             alt={suggestion.title}
                                             className="w-8 h-12 object-cover rounded-sm"

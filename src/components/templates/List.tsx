@@ -4,6 +4,7 @@ import { useMoviesStore } from "@/stores/movieStore";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Link from "next/link";
 import { MovieItem } from "@/lib/types";
+import Image from "next/image";
 const ListMovie: React.FC = (props) => {
     const movies = useMoviesStore((state) => state.movies);
     const isLoading = useMoviesStore((state) => state.isLoading);
@@ -89,7 +90,7 @@ const ListMovie: React.FC = (props) => {
                                 className="flex flex-col items-center transition-transform duration-300 hover:scale-110 group cursor-pointer"
                             >
                                 <div className="relative flex justify-center">
-                                    <img
+                                    <Image
                                         src={`https://image.tmdb.org/t/p/w500/${item.poster_path}`}
                                         alt={item.original_title}
                                         className="w-[160px] h-[240px] rounded-md shadow-md"
