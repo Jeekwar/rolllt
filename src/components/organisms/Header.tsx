@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { BiSearch } from 'react-icons/bi';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 import { useMoviesStore } from "@/stores/movieStore";
 import { MovieCategory } from '@/lib/types';
 

@@ -60,7 +60,7 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
         set(append ? { isFetchingMore: true } : { isLoading: true, error: null });
 
         let activeCategory: MovieCategory = category || state.currentCategory;
-        let queryToUse = state.searchQuery;
+        const queryToUse = state.searchQuery;
         
 
         if (queryToUse && queryToUse.length > 0) {
@@ -128,7 +128,6 @@ export const useMoviesStore = create<AppMovieState>((set, get) => ({
             set({ suggestions: response.results?.slice(0, 7) || [], isFetchingSuggestions: false });
         } catch (err: unknown) {
             console.error("Failed to fetch suggestions:", err);
-            const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred.";
             set({ suggestions: [], isFetchingSuggestions: false });
         }
     },
