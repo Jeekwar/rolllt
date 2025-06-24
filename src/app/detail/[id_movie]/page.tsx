@@ -4,22 +4,17 @@ import { MovieDetailState } from '@/lib/interfaces';
 import { getMovieDetail } from '@/services/movies.service';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeftLong } from "react-icons/fa6";
-import React, { useEffect, useState } from 'react'; 
+import React, { use, useEffect, useState } from 'react';
 import Image from 'next/image';
 
 interface MovieDetailPageProps {
-  params: {
-    id_movie: string; 
-  };
-}
-
+  params: Promise<{ id_movie: string }>;
+  }
 export default function MovieDetailPage({ params }: MovieDetailPageProps) {
   const router = useRouter();
+
+  const { id_movie: movieId } = use(params);
   
-  const unwrappedParams = React.use(params as any);
-  const movieId = (unwrappedParams as any).id_movie;
-
-
   const [movieDetail, setMovieDetail] = useState<MovieDetailState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
