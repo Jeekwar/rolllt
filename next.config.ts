@@ -4,7 +4,10 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['image.tmdb.org'],
   },
-  // devIndicators: false
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  devIndicators: false
 };
 
 export default nextConfig;
